@@ -10,7 +10,7 @@ from sklearn.metrics import silhouette_score
 import warnings
 warnings.filterwarnings("ignore")
 
-# ── Page config ─────────────────────────────────────────────────────────────
+# Page config 
 st.set_page_config(
     page_title="Mall Customer Clustering",
     page_icon="🛍️",
@@ -18,7 +18,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Custom CSS ───────────────────────────────────────────────────────────────
+# Custom CSS 
 st.markdown("""
 <style>
     .main-title {font-size:2.4rem; font-weight:700; color:#4f46e5; margin-bottom:0.2rem;}
@@ -32,13 +32,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ── Data loading & caching ───────────────────────────────────────────────────
+# Data loading & caching 
 @st.cache_data
 def load_data(file):
     return pd.read_csv(file)
 
 
-# ── Cleaning pipeline ────────────────────────────────────────────────────────
+# Cleaning pipeline 
 def clean_data(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
     log = []
     df = df.copy()
@@ -96,7 +96,7 @@ def clean_data(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
     return df, log
 
 
-# ── Feature selection helper ─────────────────────────────────────────────────
+# Feature selection helper
 FEATURE_PRESETS = {
     "Income + Spending (classic)": ["annual_income_k_", "spending_score_1_100_"],
     "Age + Spending":               ["age", "spending_score_1_100_"],
@@ -105,16 +105,15 @@ FEATURE_PRESETS = {
 }
 
 
-# ── Cluster label helper ─────────────────────────────────────────────────────
+# Cluster label helper 
 CLUSTER_DESCRIPTIONS = {
     0: "Segment A", 1: "Segment B", 2: "Segment C",
     3: "Segment D", 4: "Segment E", 5: "Segment F",
 }
 
 
-# ════════════════════════════════════════════════════════════════════════════
 #  SIDEBAR
-# ════════════════════════════════════════════════════════════════════════════
+
 with st.sidebar:
     st.image("https://img.icons8.com/color/96/shopping-mall.png", width=64)
     st.title("⚙️ Controls")
@@ -143,9 +142,8 @@ with st.sidebar:
                          disabled=(raw_df is None))
 
 
-# ════════════════════════════════════════════════════════════════════════════
 #  MAIN CONTENT
-# ════════════════════════════════════════════════════════════════════════════
+
 st.markdown('<div class="main-title">🛍️ Mall Customer Segmentation</div>',
             unsafe_allow_html=True)
 st.markdown('<div class="sub-title">K-Means clustering with interactive controls & cleaning pipeline</div>',
@@ -155,12 +153,12 @@ if raw_df is None:
     st.info("👈  Upload `Mall_Customers.csv` from the sidebar to get started.")
     st.stop()
 
-# ── Tabs ─────────────────────────────────────────────────────────────────────
+#  Tab
 tab_data, tab_clean, tab_eda, tab_elbow, tab_cluster, tab_export = st.tabs([
     "📄 Raw Data", "🧹 Cleaning", "📊 EDA", "📈 Elbow", "🎯 Clusters", "💾 Export"
 ])
 
-# ── Tab 1 : Raw data ──────────────────────────────────────────────────────────
+# Tab 1 : Raw data
 with tab_data:
     st.markdown('<div class="section-header">Raw Data Preview</div>', unsafe_allow_html=True)
     st.dataframe(raw_df, use_container_width=True, height=320)
@@ -169,10 +167,10 @@ with tab_data:
     c2.metric("Columns", raw_df.shape[1])
     c3.metric("Missing values", int(raw_df.isnull().sum().sum()))
 
-# ── Clean data (always) ───────────────────────────────────────────────────────
+#  Clean data
 df_clean, clean_log = clean_data(raw_df)
 
-# ── Tab 2 : Cleaning log ──────────────────────────────────────────────────────
+# Tab 2 : Cleaning log 
 with tab_clean:
     st.markdown('<div class="section-header">Cleaning Pipeline Log</div>', unsafe_allow_html=True)
     for msg in clean_log:
@@ -181,7 +179,7 @@ with tab_clean:
     st.markdown('<div class="section-header">Cleaned Data Preview</div>', unsafe_allow_html=True)
     st.dataframe(df_clean, use_container_width=True, height=300)
 
-# ── Tab 3 : EDA ───────────────────────────────────────────────────────────────
+#  Tab 3 : EDA 
 with tab_eda:
     st.markdown('<div class="section-header">Exploratory Analysis</div>', unsafe_allow_html=True)
 
@@ -225,7 +223,7 @@ with tab_eda:
     st.pyplot(fig3)
     plt.close(fig3)
 
-# ── Resolve feature columns ────────────────────────────────────────────────────
+# Resolve feature columns
 feature_cols_raw = FEATURE_PRESETS[preset_name]
 # Map to actual cleaned column names (handle k$ → k_)
 col_map = {c: c for c in df_clean.columns}
@@ -247,7 +245,7 @@ X = df_clean[resolved_features].dropna()
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
-# ── Tab 4 : Elbow ─────────────────────────────────────────────────────────────
+# Tab 4 : Elbow 
 with tab_elbow:
     st.markdown('<div class="section-header">Elbow Method + Silhouette Score</div>',
                 unsafe_allow_html=True)
@@ -284,7 +282,7 @@ with tab_elbow:
             f"({sil_scores[best_k-2]:.3f}).  You selected **K = {k}**.")
 
 
-# ── Tab 5 : Clusters ──────────────────────────────────────────────────────────
+#  Tab 5 : Clusters 
 with tab_cluster:
     if not run_btn:
         st.info("Configure K in the sidebar and click **🚀 Run Clustering**.")
@@ -305,7 +303,7 @@ with tab_cluster:
         m3.metric("Inertia", f"{km_final.inertia_:,.0f}")
         m4.metric("Customers clustered", len(df_result))
 
-        # ── Scatter plot ──────────────────────────────────────────────────────
+        # Scatter plot
         st.markdown('<div class="section-header">Cluster Scatter Plot</div>',
                     unsafe_allow_html=True)
 
@@ -333,7 +331,7 @@ with tab_cluster:
         st.pyplot(fig5)
         plt.close(fig5)
 
-        # ── PCA 2D view (if > 2 features) ────────────────────────────────────
+        # PCA 2D view (if > 2 features) 
         if len(resolved_features) > 2:
             st.markdown('<div class="section-header">PCA 2D Projection</div>',
                         unsafe_allow_html=True)
@@ -353,7 +351,7 @@ with tab_cluster:
             st.pyplot(fig6)
             plt.close(fig6)
 
-        # ── Cluster profiles ──────────────────────────────────────────────────
+        # Cluster profiles
         st.markdown('<div class="section-header">Cluster Profiles</div>',
                     unsafe_allow_html=True)
         num_feat_clean = [c for c in df_result.select_dtypes(include="number").columns
@@ -385,7 +383,7 @@ with tab_cluster:
         # Store result for export tab
         st.session_state["df_result"] = df_result
 
-# ── Tab 6 : Export ────────────────────────────────────────────────────────────
+#  Tab 6 : Export 
 with tab_export:
     st.markdown('<div class="section-header">Download Results</div>', unsafe_allow_html=True)
 
